@@ -1,5 +1,5 @@
 #!/bin/bash
-readonly SCRIPT_DIR=$(dirname "$(readlink -f "${BASH_SOURCE}")")
+readonly SCRIPT_DIR=$(dirname "$(readlink -f "${0}")")
 IMAGE_NAME=base_images/cuda
 DOCKER_FILENAME=Dockerfile
 TAG=pystarfc
