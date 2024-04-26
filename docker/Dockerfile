@@ -1,6 +1,6 @@
 #FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
-#FROM nvidia/cuda:11.2.1-cudnn8-devel-ubuntu20.04
-FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+FROM nvidia/cuda:11.4.3-cudnn8-devel-ubuntu20.04
+#FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
 
 
 ## Setup user id inside docker
