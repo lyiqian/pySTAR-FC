@@ -13,7 +13,7 @@ xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 
 # Provide full path to code folder
 
-CODE_FOLDER=/home/yulia/Documents/pySTAR-FC
+CODE_FOLDER=/home/eason/repos/pySTAR-FC
 
 ###################################################################
 ########### DO NOT MODIFY SETTINGS BELOW ##########################
@@ -30,7 +30,7 @@ CONTAINER_NAME=starfc
 #KERAS_TEMP=/tmp/.keras
 DOCKER_TEMP=$HOME/dockers/docker_temp
 
-WORKING_DIR=$(dirname "$(readlink -f "${BASH_SOURCE}")")/..
+WORKING_DIR=$(dirname "$(readlink -f "${0}")")/..
 
 # gpu and memory limit
 GPU_DEVICE=0
