@@ -87,7 +87,7 @@ case $key in
 	echo "Options:"
 	echo "	-im, --image_name 	name of the docker image (default \"base_images/tensorflow\")"
 	echo "	-t, --tag 		image tag name (default \"tf2-gpu\")"
-	echo "	-gd, --gpu_device 	gpu to be used inside docker (default 1). Use -gd=1,2 for multiple gpus"
+	echo "	-gd, --gpu_device 	gpu to be used inside docker (default 1). Use -gd 1,2 for multiple gpus"
 	echo "	-cn, --container_name	name of container (default \"tf2_run\" )"
 	echo "	-m, --memory_limit 	RAM limit (default 32g)"
 	echo "  -cmd, --command  command to run inside the docker, otherwise, it is run in interactive mode"
