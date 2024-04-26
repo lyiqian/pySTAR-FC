@@ -50,7 +50,7 @@ fi
 
 
 docker buildx build -t ${IMAGE_NAME}:${TAG} \
-  --build-arg USER_ID=$(id -u) \
-  --build-arg GROUP_ID=$(id -g) \
+  --build-arg USER_ID=1004 \
+  --build-arg GROUP_ID=1004 \
 	-f ${SCRIPT_DIR}/${DOCKER_FILENAME} \
 	${SCRIPT_DIR}
