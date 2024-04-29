@@ -4,6 +4,9 @@ from scipy.ndimage import zoom
 from scipy.special import logsumexp
 import cv2
 
+tf.disable_eager_execution()
+
+
 class DeepGazeII:
     def __init__(self):
         #self.centerbias_template = np.load('contrib/DeepGazeII/centerbias.npy')
