@@ -13,7 +13,7 @@ xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 
 # Provide full path to code folder
 
-CODE_FOLDER=/home/yulia/Documents/pySTAR-FC
+CODE_FOLDER=/home/eason/repos/pySTAR-FC
 
 ###################################################################
 ########### DO NOT MODIFY SETTINGS BELOW ##########################
@@ -30,7 +30,7 @@ CONTAINER_NAME=starfc
 #KERAS_TEMP=/tmp/.keras
 DOCKER_TEMP=$HOME/dockers/docker_temp
 
-WORKING_DIR=$(dirname "$(readlink -f "${BASH_SOURCE}")")/..
+WORKING_DIR=$(dirname "$(readlink -f "${0}")")/..
 
 # gpu and memory limit
 GPU_DEVICE=0
@@ -87,7 +87,7 @@ case $key in
 	echo "Options:"
 	echo "	-im, --image_name 	name of the docker image (default \"base_images/tensorflow\")"
 	echo "	-t, --tag 		image tag name (default \"tf2-gpu\")"
-	echo "	-gd, --gpu_device 	gpu to be used inside docker (default 1). Use -gd=1,2 for multiple gpus"
+	echo "	-gd, --gpu_device 	gpu to be used inside docker (default 1). Use -gd 1,2 for multiple gpus"
 	echo "	-cn, --container_name	name of container (default \"tf2_run\" )"
 	echo "	-m, --memory_limit 	RAM limit (default 32g)"
 	echo "  -cmd, --command  command to run inside the docker, otherwise, it is run in interactive mode"

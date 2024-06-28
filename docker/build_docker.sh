@@ -40,7 +40,7 @@ esac
 done
 
 #Check driver version and update the DRIVER LINK
-DRIVER_VERSION=$(glxinfo | grep "OpenGL version string" | rev | cut -d" " -f1 | rev) 
+DRIVER_VERSION=$(modinfo nvidia | grep ^version | egrep "[0-9]+\.[0-9]+\.[0-9]+" -o) 
 
 DRIVER_LINK="http://us.download.nvidia.com/XFree86/Linux-x86_64/$DRIVER_VERSION/NVIDIA-Linux-x86_64-$DRIVER_VERSION.run"
 if [ ! -f NVIDIA-DRIVER.run ]; then
@@ -50,7 +50,7 @@ fi
 
 
 docker buildx build -t ${IMAGE_NAME}:${TAG} \
-  --build-arg USER_ID=$(id -u) \
-  --build-arg GROUP_ID=$(id -g) \
+  --build-arg USER_ID=1004 \
+  --build-arg GROUP_ID=1004 \
 	-f ${SCRIPT_DIR}/${DOCKER_FILENAME} \
 	${SCRIPT_DIR}
