@@ -5,16 +5,20 @@ import fabric
 import invoke
 
 
+NextFixation = object  # TODO need to think about passing around (e.g. via ssh) fixation objects
+
+
 # ABCs
+## YL can write concrete one and only create ABC on 2nd concrete
 class IImageReader(abc.ABC):
     @abc.abstractmethod
-    def read(self, path):
+    def read(self, img_src):
         pass
 
 
 class IFixationWriter(abc.ABC):
     @abc.abstractmethod
-    def write(self, fixations):
+    def write(self, fixation: NextFixation):
         pass
 
 
@@ -30,8 +34,8 @@ class AbstractStarFC(abc.ABC):
     def calc_fixation(self, image):
         pass
 
-    def process_single(self, path=None):
-        image = self.img_reader.read(path)
+    def process_single(self, img_src=None):
+        image = self.img_reader.read(img_src)
         next_fixation = self.calc_fixation(image)
         self.fixation_writer.write(next_fixation)
 
@@ -71,8 +75,8 @@ class SshImageReader(IImageReader):
     def __init__(self, ssh_conn) -> None:
         self.conn = ssh_conn
 
-    def read(self, path=None):
-        local_img_filepath = self.LOCAL_IMG_DIRPATH + path
+    def read(self, img_src=None):
+        local_img_filepath = self.LOCAL_IMG_DIRPATH + img_src
         remote_img_filepath = self.REMOTE_IMG_DIRPATH + REMOTE_IMG_FILENAME
         print("Putting to", remote_img_filepath)
         self.conn.put(local_img_filepath, remote=remote_img_filepath)
@@ -87,7 +91,7 @@ class SshFixationWriter(IFixationWriter):
     def __init__(self, ssh_conn) -> None:
         self.conn = ssh_conn
 
-    def write(self, fixations):
+    def write(self, fixation: NextFixation):
         print("Downloading to", self.LOCAL_OUTPUT_PATH)
         self.conn.get(self.REMOTE_OUTPUT_PATH, local=self.LOCAL_OUTPUT_PATH)
 
