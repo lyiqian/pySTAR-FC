@@ -30,9 +30,6 @@ class AbstractStarFC(abc.ABC):
     def calc_fixation(self, image):
         pass
 
-    def connect(self, ssh_conn):
-        self.ssh_conn = ssh_conn
-
     def process_single(self, path=None):
         image = self.img_reader.read(path)
         next_fixation = self.calc_fixation(image)
@@ -48,6 +45,10 @@ REMOTE_IMG_FILENAME = 'curr_frame.jpg'
 
 class GsvStarFC(AbstractStarFC):
     CONFIG_PATH = 'config_files/pantilt.ini'
+
+    def connect(self, ssh_conn):
+        self.ssh_conn = ssh_conn
+
     def calc_fixation(self, image):
         print("Calc next fixation")
         cmd = (
