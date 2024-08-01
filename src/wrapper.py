@@ -11,12 +11,14 @@ NextFixation = object  # TODO need to think about passing around (e.g. via ssh) 
 # ABCs
 ## YL workflow: can write concrete one and only create ABC on 2nd concrete
 class IImageReader(abc.ABC):
+    """An intermediate layer between eye and FC algorithm."""
     @abc.abstractmethod
     def read(self, img_src):
         pass
 
 
 class IFixationLoader(abc.ABC):
+    """An intermediate layer between FC algorithm and eye mover."""
     @abc.abstractmethod
     def load(self, fixation_src):
         pass
@@ -37,7 +39,7 @@ class IEye(abc.ABC):
     eye_mover: IEyeMover
 
 
-class AbstractStarFC(abc.ABC):
+class AbstractEmbodiedStarFC(abc.ABC):
     img_reader: IImageReader
     fixation_loader: IFixationLoader
     eye: IEye
@@ -53,8 +55,10 @@ class AbstractStarFC(abc.ABC):
 
     def process_single(self):
         img_src = self.eye.retina.capture()
+
         image = self.img_reader.read(img_src)
         fixation_src = self.calc_fixation(image)
+
         next_fixation = self.fixation_loader.load(fixation_src)
         self.eye.eye_mover.saccade(next_fixation)
 
@@ -68,7 +72,7 @@ LOCAL_IMG_FILENAME = 'bridge-cards-s.jpg'
 REMOTE_IMG_FILENAME = 'curr_frame.jpg'
 
 
-class GsvStarFC(AbstractStarFC):
+class GsvStarFC(AbstractEmbodiedStarFC):
     CONFIG_PATH = 'config_files/pantilt.ini'
 
     # output format depends on `dumpFixationsToMat`
@@ -121,7 +125,20 @@ class SshFixationLoader(IFixationLoader):
         # TODO load & return next_fixation
 
 
-# TODO concrete class for Eye
+class StaticFileRetina(IRetina):
+    def capture(self):
+        local_img_src = f'{LOCAL_ROOT}/images/{LOCAL_IMG_FILENAME}'
+        return local_img_src
+
+class PtuEyeMover(IEyeMover):
+    """Pan-tilt unit eye mover."""
+    def saccade(self, next_fixation):
+        pass  # TODO
+
+class BasicEye(IEye):
+    def __init__(self, retina: IRetina, eye_mover: IEyeMover) -> None:
+        self.retina = retina
+        self.eye_mover = eye_mover
 
 
 if __name__ == '__main__':
@@ -130,9 +147,9 @@ if __name__ == '__main__':
 
     img_reader = SshImageReader(ssh_conn)
     fix_loader = SshFixationLoader(ssh_conn)
-    gsv_star_fc = GsvStarFC(img_reader, fix_loader)  # TODO eyemover
+    eye = BasicEye(StaticFileRetina(), PtuEyeMover())
+    gsv_star_fc = GsvStarFC(img_reader, fix_loader, eye)
 
     gsv_star_fc.connect(ssh_conn)
 
-    local_img_src = f'{LOCAL_ROOT}/images/{LOCAL_IMG_FILENAME}'
-    gsv_star_fc.process_single(local_img_src)
+    gsv_star_fc.process_single()
