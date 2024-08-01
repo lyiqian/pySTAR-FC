@@ -61,6 +61,7 @@ REMOTE_IMG_FILENAME = 'curr_frame.jpg'
 class GsvStarFC(AbstractStarFC):
     CONFIG_PATH = 'config_files/pantilt.ini'
 
+    # output format depends on `dumpFixationsToMat`
     IMG_NAME = REMOTE_IMG_FILENAME.rsplit('.', maxsplit=1)[0]
     OUTPUT_PATH = f'{REMOTE_ROOT}/output/{IMG_NAME}/fixations_{IMG_NAME}.mat'
 
@@ -86,18 +87,15 @@ class GsvStarFC(AbstractStarFC):
 
 class SshImageReader(IImageReader):
     """This acts as a POST."""
-    LOCAL_IMG_DIRPATH = f'{LOCAL_ROOT}/images/'
-    REMOTE_IMG_DIRPATH = f'{REMOTE_ROOT}/images/'
+    REMOTE_IMG_PATH = f'{REMOTE_ROOT}/images/{REMOTE_IMG_FILENAME}'
 
     def __init__(self, ssh_conn) -> None:
         self.conn = ssh_conn
 
     def read(self, img_src=None):
-        local_img_filepath = self.LOCAL_IMG_DIRPATH + img_src
-        remote_img_filepath = self.REMOTE_IMG_DIRPATH + REMOTE_IMG_FILENAME
-        print("Putting to", remote_img_filepath)
-        self.conn.put(local_img_filepath, remote=remote_img_filepath)
-        return remote_img_filepath
+        print("Putting to", self.REMOTE_IMG_PATH)
+        self.conn.put(img_src, remote=self.REMOTE_IMG_PATH)
+        return self.REMOTE_IMG_PATH
 
 
 class SshFixationLoader(IFixationLoader):
@@ -110,7 +108,7 @@ class SshFixationLoader(IFixationLoader):
     def load(self, fixation_src) -> NextFixation:
         print("Downloading to", self.LOCAL_OUTPUT_PATH)
         self.conn.get(fixation_src, local=self.LOCAL_OUTPUT_PATH)
-        # TODO return next_fixation
+        # TODO load & return next_fixation
 
 
 if __name__ == '__main__':
@@ -122,4 +120,6 @@ if __name__ == '__main__':
     gsv_star_fc = GsvStarFC(img_reader, fix_loader)
 
     gsv_star_fc.connect(ssh_conn)
-    gsv_star_fc.process_single(LOCAL_IMG_FILENAME)
+
+    local_img_src = f'{LOCAL_ROOT}/images/{LOCAL_IMG_FILENAME}'
+    gsv_star_fc.process_single(local_img_src)
