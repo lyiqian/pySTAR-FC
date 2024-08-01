@@ -52,12 +52,17 @@ class AbstractStarFC(abc.ABC):
 ## Concrete Classes
 GSV_CONN_STRING = "eason@gsv.eecs.yorku.ca"
 MYPASS = os.getenv("GSV_PW")
+LOCAL_ROOT = '/home/yiqian/repos/pySTAR-FC'
+REMOTE_ROOT = '/home/eason/repos/pySTAR-FC'
 LOCAL_IMG_FILENAME = 'bridge-cards-s.jpg'
 REMOTE_IMG_FILENAME = 'curr_frame.jpg'
 
 
 class GsvStarFC(AbstractStarFC):
     CONFIG_PATH = 'config_files/pantilt.ini'
+
+    IMG_NAME = REMOTE_IMG_FILENAME.rsplit('.', maxsplit=1)[0]
+    OUTPUT_PATH = f'{REMOTE_ROOT}/output/{IMG_NAME}/fixations_{IMG_NAME}.mat'
 
     def connect(self, ssh_conn):
         self.ssh_conn = ssh_conn
@@ -76,11 +81,13 @@ class GsvStarFC(AbstractStarFC):
             print("ERROR")
             print(run_fc_result.stderr)
 
+        return self.OUTPUT_PATH
+
 
 class SshImageReader(IImageReader):
     """This acts as a POST."""
-    LOCAL_IMG_DIRPATH = '/home/yiqian/repos/pySTAR-FC/images/'
-    REMOTE_IMG_DIRPATH = '/home/eason/repos/pySTAR-FC/images/'
+    LOCAL_IMG_DIRPATH = f'{LOCAL_ROOT}/images/'
+    REMOTE_IMG_DIRPATH = f'{REMOTE_ROOT}/images/'
 
     def __init__(self, ssh_conn) -> None:
         self.conn = ssh_conn
@@ -90,20 +97,19 @@ class SshImageReader(IImageReader):
         remote_img_filepath = self.REMOTE_IMG_DIRPATH + REMOTE_IMG_FILENAME
         print("Putting to", remote_img_filepath)
         self.conn.put(local_img_filepath, remote=remote_img_filepath)
+        return remote_img_filepath
 
 
 class SshFixationLoader(IFixationLoader):
     """This acts as a GET."""
-    img_name = REMOTE_IMG_FILENAME.rsplit('.', maxsplit=1)[0]
-    REMOTE_OUTPUT_PATH = f'/home/eason/repos/pySTAR-FC/output/{img_name}/fixations_{img_name}.mat'
-    LOCAL_OUTPUT_PATH = f'/home/yiqian/repos/pySTAR-FC/output/from_wrapper/fixations_{img_name}.mat'
+    LOCAL_OUTPUT_PATH = f'{LOCAL_ROOT}/output/from_wrapper/next_fixation.mat'
 
     def __init__(self, ssh_conn) -> None:
         self.conn = ssh_conn
 
-    def load(self, fixation_src) -> NextFixation:  # TODO pass in remove output path
+    def load(self, fixation_src) -> NextFixation:
         print("Downloading to", self.LOCAL_OUTPUT_PATH)
-        self.conn.get(self.REMOTE_OUTPUT_PATH, local=self.LOCAL_OUTPUT_PATH)
+        self.conn.get(fixation_src, local=self.LOCAL_OUTPUT_PATH)
         # TODO return next_fixation
 
 
