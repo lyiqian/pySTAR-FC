@@ -22,31 +22,41 @@ class IFixationLoader(abc.ABC):
         pass
 
 
+class IRetina(abc.ABC):
+    @abc.abstractmethod
+    def capture(self):
+        pass
+
 class IEyeMover(abc.ABC):
     @abc.abstractmethod
     def saccade(self, next_fixation):
         pass
 
+class IEye(abc.ABC):
+    retina: IRetina
+    eye_mover: IEyeMover
+
 
 class AbstractStarFC(abc.ABC):
     img_reader: IImageReader
     fixation_loader: IFixationLoader
-    eye_mover: IEyeMover
+    eye: IEye
 
-    def __init__(self, img_reader, fixation_loader, eye_mover) -> None:
+    def __init__(self, img_reader, fixation_loader, eye) -> None:
         self.img_reader = img_reader
         self.fixation_loader = fixation_loader
-        self.eye_mover = eye_mover
+        self.eye = eye
 
     @abc.abstractmethod
     def calc_fixation(self, image):
         pass
 
-    def process_single(self, img_src=None):
+    def process_single(self):
+        img_src = self.eye.retina.capture()
         image = self.img_reader.read(img_src)
         fixation_src = self.calc_fixation(image)
         next_fixation = self.fixation_loader.load(fixation_src)
-        self.eye_mover.saccade(next_fixation)
+        self.eye.eye_mover.saccade(next_fixation)
 
 
 ## Concrete Classes
@@ -111,13 +121,16 @@ class SshFixationLoader(IFixationLoader):
         # TODO load & return next_fixation
 
 
+# TODO concrete class for Eye
+
+
 if __name__ == '__main__':
     # Example usage
     ssh_conn = fabric.Connection(GSV_CONN_STRING, connect_kwargs=dict(password=MYPASS))
 
     img_reader = SshImageReader(ssh_conn)
     fix_loader = SshFixationLoader(ssh_conn)
-    gsv_star_fc = GsvStarFC(img_reader, fix_loader)
+    gsv_star_fc = GsvStarFC(img_reader, fix_loader)  # TODO eyemover
 
     gsv_star_fc.connect(ssh_conn)
 
