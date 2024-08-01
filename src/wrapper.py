@@ -4,8 +4,11 @@ import os
 import fabric
 import invoke
 
+import ptu.demo  # TODO
+
 
 NextFixation = object  # TODO need to think about passing around (e.g. via ssh) fixation objects
+# TODO Should probably use pixel as unit
 
 
 # ABCs
@@ -15,7 +18,6 @@ class IImageReader(abc.ABC):
     @abc.abstractmethod
     def read(self, img_src):
         pass
-
 
 class IFixationLoader(abc.ABC):
     """An intermediate layer between FC algorithm and eye mover."""
@@ -39,7 +41,7 @@ class IEye(abc.ABC):
     eye_mover: IEyeMover
 
 
-class AbstractEmbodiedStarFC(abc.ABC):
+class AbstractEmbodiedSTFC(abc.ABC):
     img_reader: IImageReader
     fixation_loader: IFixationLoader
     eye: IEye
@@ -72,12 +74,12 @@ LOCAL_IMG_FILENAME = 'bridge-cards-s.jpg'
 REMOTE_IMG_FILENAME = 'curr_frame.jpg'
 
 
-class GsvStarFC(AbstractEmbodiedStarFC):
+class GsvSTFC(AbstractEmbodiedSTFC):
     CONFIG_PATH = 'config_files/pantilt.ini'
 
     # output format depends on `dumpFixationsToMat`
     IMG_NAME = REMOTE_IMG_FILENAME.rsplit('.', maxsplit=1)[0]
-    OUTPUT_PATH = f'{REMOTE_ROOT}/output/{IMG_NAME}/fixations_{IMG_NAME}.mat'
+    FIXATION_OUTPUT_PATH = f'{REMOTE_ROOT}/output/{IMG_NAME}/fixations_{IMG_NAME}.mat'
 
     def connect(self, ssh_conn):
         self.ssh_conn = ssh_conn
@@ -96,7 +98,7 @@ class GsvStarFC(AbstractEmbodiedStarFC):
             print("ERROR")
             print(run_fc_result.stderr)
 
-        return self.OUTPUT_PATH
+        return self.FIXATION_OUTPUT_PATH
 
 
 class SshImageReader(IImageReader):
@@ -114,15 +116,15 @@ class SshImageReader(IImageReader):
 
 class SshFixationLoader(IFixationLoader):
     """This acts as a GET."""
-    LOCAL_OUTPUT_PATH = f'{LOCAL_ROOT}/output/from_wrapper/next_fixation.mat'
+    LOCAL_FIXATION_PATH = f'{LOCAL_ROOT}/output/from_wrapper/next_fixation.mat'
 
     def __init__(self, ssh_conn) -> None:
         self.conn = ssh_conn
 
     def load(self, fixation_src) -> NextFixation:
-        print("Downloading to", self.LOCAL_OUTPUT_PATH)
-        self.conn.get(fixation_src, local=self.LOCAL_OUTPUT_PATH)
-        # TODO load & return next_fixation
+        print("Downloading to", self.LOCAL_FIXATION_PATH)
+        self.conn.get(fixation_src, local=self.LOCAL_FIXATION_PATH)
+        # TODO load & return next_fixation; cf notebook in labpc
 
 
 class StaticFileRetina(IRetina):
@@ -130,10 +132,16 @@ class StaticFileRetina(IRetina):
         local_img_src = f'{LOCAL_ROOT}/images/{LOCAL_IMG_FILENAME}'
         return local_img_src
 
-class PtuEyeMover(IEyeMover):
-    """Pan-tilt unit eye mover."""
+class XXCameraRetina(IRetina):  # TODO rename
+    def capture(self):
+        pass # TODO
+
+
+class PtuEyeMover(IEyeMover):  # TODO move to ptu pacakge
+    """Pan-tilt unit eye mover, using mount designed by Markus."""
     def saccade(self, next_fixation):
         pass  # TODO
+
 
 class BasicEye(IEye):
     def __init__(self, retina: IRetina, eye_mover: IEyeMover) -> None:
@@ -148,8 +156,8 @@ if __name__ == '__main__':
     img_reader = SshImageReader(ssh_conn)
     fix_loader = SshFixationLoader(ssh_conn)
     eye = BasicEye(StaticFileRetina(), PtuEyeMover())
-    gsv_star_fc = GsvStarFC(img_reader, fix_loader, eye)
+    gsv_stfc = GsvSTFC(img_reader, fix_loader, eye)
 
-    gsv_star_fc.connect(ssh_conn)
+    gsv_stfc.connect(ssh_conn)
 
-    gsv_star_fc.process_single()
+    gsv_stfc.process_single()
