@@ -180,10 +180,33 @@ class ElpCameraRetina(IRetina):
         pass # TODO
 
 
+# TODO move to ptu sub-pack
+import serial
 class PtuEyeMover(IEyeMover):
-    """Pan-tilt unit eye mover, using mount designed by Markus."""
+    """Pan-tilt unit eye mover, using mount designed by Markus.
+
+    For command, cf doc *Pan-tilt Unit User's Manual*."""
+    PORT_NAME = '/dev/ttyUSB0'
+
+    def __init__(self):
+        self.ser = serial.Serial(self.PORT_NAME, 9600, timeout=1)
+        self.ser.xonxoff = True
+        self.ser.isOpen()
+
+        self._send_cmd('pxu1500 ')
+        self._send_cmd('pnu-1000 ')
+        self._send_cmd('tn-900 ')
+        self._send_cmd('tx900 ')
+        self._send_cmd('pp0 ')
+        self._send_cmd('tp0 ')
+
     def saccade(self, next_fixation: NextFixation):
-        pass  # TODO
+        pass  # TODO the actual calculation
+        self._send_cmd(f'pp{next_fixation.h_pixel} ')
+        self._send_cmd(f'tp{next_fixation.v_pixel} ')
+
+    def _send_cmd(self, cmd):
+        self.ser.write(cmd.encode('ascii'))
 
 
 class BasicEye(IEye):
