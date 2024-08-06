@@ -3,12 +3,21 @@ import os
 
 import fabric
 import invoke
+import scipy.io as spio
 
 import ptu.demo  # TODO
 
 
-NextFixation = object  # TODO need to think about passing around (e.g. via ssh) fixation objects
-# TODO Should probably use pixel as unit
+class NextFixation:
+    h_pixel: int
+    v_pixel: int
+
+    def __init__(self, coords):
+        self.h_pixel = int(coords[0])
+        self.v_pixel = int(coords[1])
+
+    def __str__(self) -> str:
+        return f'H: {self.h_pixel}, V: {self.v_pixel}'
 
 
 # ABCs
@@ -22,7 +31,7 @@ class IImageReader(abc.ABC):
 class IFixationLoader(abc.ABC):
     """An intermediate layer between FC algorithm and eye mover."""
     @abc.abstractmethod
-    def load(self, fixation_src):
+    def load(self, fixation_src) -> NextFixation:
         pass
 
 
@@ -33,7 +42,7 @@ class IRetina(abc.ABC):
 
 class IEyeMover(abc.ABC):
     @abc.abstractmethod
-    def saccade(self, next_fixation):
+    def saccade(self, next_fixation: NextFixation):
         pass
 
 class IEye(abc.ABC):
@@ -65,7 +74,7 @@ class AbstractEmbodiedSTFC(abc.ABC):
         self.eye.eye_mover.saccade(next_fixation)
 
 
-## Concrete Classes
+## Concrete Classes #TODO move to sep file(s)
 GSV_CONN_STRING = "eason@gsv.eecs.yorku.ca"
 MYPASS = os.getenv("GSV_PW")
 LOCAL_ROOT = '/home/yiqian/repos/pySTAR-FC'
@@ -124,7 +133,12 @@ class SshFixationLoader(IFixationLoader):
     def load(self, fixation_src) -> NextFixation:
         print("Downloading to", self.LOCAL_FIXATION_PATH)
         self.conn.get(fixation_src, local=self.LOCAL_FIXATION_PATH)
-        # TODO load & return next_fixation; cf notebook in labpc
+
+        fix_data = spio.loadmat(self.LOCAL_FIXATION_PATH)
+        fixs = fix_data['fixations']
+        next_coords = fixs[1]  # 0 always the central starting point
+        next_fixation = NextFixation(next_coords)
+        return next_fixation
 
 
 class StaticFileRetina(IRetina):
@@ -132,14 +146,14 @@ class StaticFileRetina(IRetina):
         local_img_src = f'{LOCAL_ROOT}/images/{LOCAL_IMG_FILENAME}'
         return local_img_src
 
-class XXCameraRetina(IRetina):  # TODO rename
+class ElpCameraRetina(IRetina):
     def capture(self):
         pass # TODO
 
 
-class PtuEyeMover(IEyeMover):  # TODO move to ptu pacakge
+class PtuEyeMover(IEyeMover):
     """Pan-tilt unit eye mover, using mount designed by Markus."""
-    def saccade(self, next_fixation):
+    def saccade(self, next_fixation: NextFixation):
         pass  # TODO
 
 
