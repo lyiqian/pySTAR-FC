@@ -1,11 +1,13 @@
 import abc
 import os
+import random
 
+import cv2
 import fabric
 import invoke
 import scipy.io as spio
 
-import ptu.demo  # TODO
+# import ptu.demo  # TODO
 
 
 class NextFixation:
@@ -110,6 +112,12 @@ class GsvSTFC(AbstractEmbodiedSTFC):
         return self.FIXATION_OUTPUT_PATH
 
 
+class FileImageReader(IImageReader):
+    def read(self, img_src):
+        img = cv2.imread(img_src)
+        return img
+
+
 class SshImageReader(IImageReader):
     """This acts as a POST."""
     REMOTE_IMG_PATH = f'{REMOTE_ROOT}/images/{REMOTE_IMG_FILENAME}'
@@ -117,13 +125,23 @@ class SshImageReader(IImageReader):
     def __init__(self, ssh_conn) -> None:
         self.conn = ssh_conn
 
-    def read(self, img_src=None):
+    def read(self, img_src):
         print("Putting to", self.REMOTE_IMG_PATH)
         self.conn.put(img_src, remote=self.REMOTE_IMG_PATH)
         return self.REMOTE_IMG_PATH
 
 
-class SshFixationLoader(IFixationLoader):
+class FileFixationLoader(IFixationLoader):
+    """For .mat file saved by spio.savemat() fixationHistoryMap."""
+    def load(self, fixation_src) -> NextFixation:
+        fix_data = spio.loadmat(fixation_src)
+        fixs = fix_data['fixations']
+        next_coords = fixs[1]  # 0 always the central starting point
+        next_fixation = NextFixation(next_coords)
+        return next_fixation
+
+
+class SshFixationLoader(FileFixationLoader):
     """This acts as a GET."""
     LOCAL_FIXATION_PATH = f'{LOCAL_ROOT}/output/from_wrapper/next_fixation.mat'
 
@@ -133,12 +151,23 @@ class SshFixationLoader(IFixationLoader):
     def load(self, fixation_src) -> NextFixation:
         print("Downloading to", self.LOCAL_FIXATION_PATH)
         self.conn.get(fixation_src, local=self.LOCAL_FIXATION_PATH)
+        return super().load(self.LOCAL_FIXATION_PATH)
 
-        fix_data = spio.loadmat(self.LOCAL_FIXATION_PATH)
-        fixs = fix_data['fixations']
-        next_coords = fixs[1]  # 0 always the central starting point
-        next_fixation = NextFixation(next_coords)
-        return next_fixation
+
+class DummySTFC(AbstractEmbodiedSTFC):
+    TEMP_FIXATION_PATH = '/tmp/next_fixation.mat'
+
+    def calc_fixation(self, image):
+        img_h, img_w = image.shape[0], image.shape[1]
+
+        h_pixel = random.randint(0, img_w-1)
+        v_pixel = random.randint(0, img_h-1)
+        fixations = [[img_w//2, img_h//2], [h_pixel, v_pixel]]
+        print("Next dummy fixations: ", fixations)
+
+        spio.savemat(self.TEMP_FIXATION_PATH, {'fixations': fixations})
+
+        return self.TEMP_FIXATION_PATH
 
 
 class StaticFileRetina(IRetina):
