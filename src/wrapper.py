@@ -181,8 +181,21 @@ class StaticFileRetina(IRetina):
         return local_img_src
 
 class ElpCameraRetina(IRetina):
+    DEFAULT_IMG_PATH = f'{LOCAL_ROOT}/images/elp_curr_frame.jpg'
+    def __init__(self):
+        self.cam = cv2.VideoCapture(0)
+
     def capture(self):
-        pass # TODO
+        result, image = self.cam.read()
+        if not result:
+            raise IOError("Can't capture img from the camera!")
+
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        cv2.imwrite(self.DEFAULT_IMG_PATH, image_rgb)
+        return self.DEFAULT_IMG_PATH
+
+    def close(self):
+        self.cam.release()
 
 
 class PtuEyeMover(IEyeMover):
