@@ -8,6 +8,7 @@ import invoke
 import scipy.io as spio
 
 # import ptu.demo  # TODO
+import ptu.core
 
 
 class NextFixation:
@@ -96,7 +97,9 @@ class GsvSTFC(AbstractEmbodiedSTFC):
         self.ssh_conn = ssh_conn
 
     def calc_fixation(self, image):
-        # TODO dynamically change config file based on `image`
+        assert isinstance(image, str)  # just a path returned from ssh img reader
+        assert image.endswith(REMOTE_IMG_FILENAME)
+
         print("Calc next fixation")
         cmd = (
             f'cd ~/repos/pySTAR-FC/docker '
@@ -138,6 +141,8 @@ class FileFixationLoader(IFixationLoader):
         fixs = fix_data['fixations']
         next_coords = fixs[1]  # 0 always the central starting point
         next_fixation = NextFixation(next_coords)
+        print("loaded next fixation:", next_fixation)
+
         return next_fixation
 
 
@@ -180,8 +185,6 @@ class ElpCameraRetina(IRetina):
         pass # TODO
 
 
-# TODO move to ptu sub-pack
-import serial
 class PtuEyeMover(IEyeMover):
     """Pan-tilt unit eye mover, using mount designed by Markus.
 
@@ -189,21 +192,12 @@ class PtuEyeMover(IEyeMover):
     PORT_NAME = '/dev/ttyUSB0'
 
     def __init__(self):
-        self.ser = serial.Serial(self.PORT_NAME, 9600, timeout=1)
-        self.ser.xonxoff = True
-        self.ser.isOpen()
-
-        self._send_cmd('pxu1500 ')
-        self._send_cmd('pnu-1000 ')
-        self._send_cmd('tn-900 ')
-        self._send_cmd('tx900 ')
-        self._send_cmd('pp0 ')
-        self._send_cmd('tp0 ')
+        self.ptu_ctrl = ptu.core.PtuController(self.PORT_NAME)
 
     def saccade(self, next_fixation: NextFixation):
         pass  # TODO the actual calculation
-        self._send_cmd(f'pp{next_fixation.h_pixel} ')
-        self._send_cmd(f'tp{next_fixation.v_pixel} ')
+        self.ptu_ctrl.run_cmd(f'pp{next_fixation.h_pixel} ')
+        self.ptu_ctrl.run_cmd(f'tp{next_fixation.v_pixel} ')
 
     def _send_cmd(self, cmd):
         self.ser.write(cmd.encode('ascii'))
