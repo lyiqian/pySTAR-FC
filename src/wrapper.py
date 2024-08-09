@@ -7,7 +7,6 @@ import fabric
 import invoke
 import scipy.io as spio
 
-# import ptu.demo  # TODO
 import ptu.core
 
 
@@ -117,7 +116,7 @@ class GsvSTFC(AbstractEmbodiedSTFC):
 
 class FileImageReader(IImageReader):
     def read(self, img_src):
-        img = cv2.imread(img_src)
+        img = cv2.imread(img_src)  # same as in LoadStaticStimulus
         return img
 
 
@@ -190,8 +189,7 @@ class ElpCameraRetina(IRetina):
         if not result:
             raise IOError("Can't capture img from the camera!")
 
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        cv2.imwrite(self.DEFAULT_IMG_PATH, image_rgb)
+        cv2.imwrite(self.DEFAULT_IMG_PATH, image)
         return self.DEFAULT_IMG_PATH
 
     def close(self):
@@ -226,11 +224,16 @@ if __name__ == '__main__':
     # Example usage
     ssh_conn = fabric.Connection(GSV_CONN_STRING, connect_kwargs=dict(password=MYPASS))
 
+    retina = ElpCameraRetina()
+    mover = PtuEyeMover()
+    eye = BasicEye(retina, mover)
+
     img_reader = SshImageReader(ssh_conn)
     fix_loader = SshFixationLoader(ssh_conn)
-    eye = BasicEye(StaticFileRetina(), PtuEyeMover())
     gsv_stfc = GsvSTFC(img_reader, fix_loader, eye)
 
     gsv_stfc.connect(ssh_conn)
 
     gsv_stfc.process_single()
+
+    retina.close()
