@@ -181,16 +181,34 @@ class StaticFileRetina(IRetina):
 
 class ElpCameraRetina(IRetina):
     DEFAULT_IMG_PATH = f'{LOCAL_ROOT}/images/elp_curr_frame.jpg'
+
+    # cf https://www.amazon.ca/ELP-Raspberry-118degree-Distortion-Industrial/dp/B0C289GYVZ?th=1
+    FOCAL_LEN_MM = 1.8
+    PIXEL_SIZE_MM = 0.00112
+    FRAME_WIDTH = 4656
+    FRAME_HEIGHT = 3469
+
     def __init__(self):
-        self.cam = cv2.VideoCapture(0)
+        self.cam = cv2.VideoCapture()
 
     def capture(self):
+        self.cam.open(0)
+        if not self.cam.isOpened():
+            self.cam.open(-1)
+
+        self._set_resolution()
         result, image = self.cam.read()
+        self.cam.release()
+
         if not result:
             raise IOError("Can't capture img from the camera!")
 
         cv2.imwrite(self.DEFAULT_IMG_PATH, image)
         return self.DEFAULT_IMG_PATH
+
+    def _set_resolution(self):
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.FRAME_WIDTH)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
 
     def close(self):
         self.cam.release()
@@ -201,6 +219,8 @@ class PtuEyeMover(IEyeMover):
 
     For command, cf doc *Pan-tilt Unit User's Manual*."""
     PORT_NAME = '/dev/ttyUSB0'
+
+    TILT_ARM_LEN_MM = 62
 
     def __init__(self):
         self.ptu_ctrl = ptu.core.PtuController(self.PORT_NAME)
@@ -235,5 +255,3 @@ if __name__ == '__main__':
     gsv_stfc.connect(ssh_conn)
 
     gsv_stfc.process_single()
-
-    retina.close()
