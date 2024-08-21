@@ -185,8 +185,8 @@ class ElpCameraRetina(IRetina):
     # cf https://www.amazon.ca/ELP-Raspberry-118degree-Distortion-Industrial/dp/B0C289GYVZ?th=1
     FOCAL_LEN_MM = 1.8
     PIXEL_SIZE_MM = 0.00112
-    FRAME_WIDTH = 4656
-    FRAME_HEIGHT = 3469
+    FRAME_WIDTH = 1024  # full is 4656
+    FRAME_HEIGHT = 768  # full is 3469
 
     def __init__(self):
         self.cam = cv2.VideoCapture()
@@ -197,6 +197,10 @@ class ElpCameraRetina(IRetina):
             self.cam.open(-1)
 
         self._set_resolution()
+        self._disable_autos()
+        self.cam.set(cv2.CAP_PROP_GAIN, 50)
+        self.cam.set(cv2.CAP_PROP_EXPOSURE, 300)
+
         result, image = self.cam.read()
         self.cam.release()
 
@@ -209,6 +213,12 @@ class ElpCameraRetina(IRetina):
     def _set_resolution(self):
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.FRAME_WIDTH)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
+
+    def _disable_autos(self):
+        if not self.cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1):  # 1 disable; 3 enable
+            raise RuntimeError("Can't disable AE")
+        if not self.cam.set(cv2.CAP_PROP_AUTO_WB, 0):
+            raise RuntimeError("Can't disable AWB")
 
     def close(self):
         self.cam.release()
