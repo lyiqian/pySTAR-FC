@@ -73,13 +73,12 @@ def capture_two_imgs_dx(ptuc, reti, pan_deg, tilt_deg=0):
     del_x_img = plt.imread(img_src)
     return orig_img, del_x_img
 
-def get_del_y_sift(orig_img, del_y_img, max_size=500, use_closest=False):
+def get_del_y_sift(orig_img, dely_img, max_size=500, use_closest=False):
     # crop img center regions
-    h, w = del_y_img.shape[:2]
+    h, w = dely_img.shape[:2]
     r = max_size // 2
     orig_band = orig_img[:, w//2-r:w//2+r+1, :].mean(-1).astype('uint8')
-    # dely_center = del_y_img[h//2-r-d:h//2+r+1, w//2-r-d:w//2+r+1, :]
-    dely_band = del_y_img[:, w//2-r:w//2+r+1, :].mean(-1).astype('uint8')
+    dely_band = dely_img[:, w//2-r:w//2+r+1, :].mean(-1).astype('uint8')
     print(dely_band[:10,:10].dtype)
     # plot_two_imgs(orig_band, dely_band)
 
@@ -130,14 +129,13 @@ def get_del_y_sift(orig_img, del_y_img, max_size=500, use_closest=False):
     print(closest_dely, "(closest)")
     return closest_dely
 
-def get_del_x_sift(orig_img, del_x_img, max_size=500, use_closest=False):
+def get_del_x_sift(orig_img, delx_img, max_size=500, use_closest=False):
     # crop img center regions
-    h, w = del_x_img.shape[:2]
+    h, w = delx_img.shape[:2]
     r = max_size // 2
     lmost_px, rmost_px = w//2-r*4, w//2+r*4  # too much distortion beyond these
     orig_band = orig_img[h//2-r:h//2+r+1, lmost_px:rmost_px, :].mean(-1).astype('uint8')
-    # dely_center = del_y_img[h//2-r-d:h//2+r+1, w//2-r-d:w//2+r+1, :]
-    delx_band = del_x_img[h//2-r:h//2+r+1, lmost_px:rmost_px, :].mean(-1).astype('uint8')
+    delx_band = delx_img[h//2-r:h//2+r+1, lmost_px:rmost_px, :].mean(-1).astype('uint8')
 
     # run sift, sample: https://gitlab.nvision.eecs.yorku.ca/yql/5323-intro-to-cv/-/blob/main/assignments/a3_script.ipynb?expanded=true&viewer=rich
     orig_kp, orig_des = compu_sift(orig_band)
