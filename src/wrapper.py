@@ -185,8 +185,10 @@ class ElpCameraRetina(IRetina):
     # cf https://www.amazon.ca/ELP-Raspberry-118degree-Distortion-Industrial/dp/B0C289GYVZ?th=1
     FOCAL_LEN_MM = 1.8
     PIXEL_SIZE_MM = 0.00112
-    FRAME_WIDTH = 1024  # full is 4656
-    FRAME_HEIGHT = 768  # full is 3469
+    # WIDTH_PX = 1024  # full is 4656
+    # HEIGHT_PX = 768  # full is 3496
+    WIDTH_PX = 4656
+    HEIGHT_PX = 3496
 
     def __init__(self):
         self.cam = cv2.VideoCapture()
@@ -211,8 +213,8 @@ class ElpCameraRetina(IRetina):
         return self.DEFAULT_IMG_PATH
 
     def _set_resolution(self):
-        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.FRAME_WIDTH)
-        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.FRAME_HEIGHT)
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, self.WIDTH_PX)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, self.HEIGHT_PX)
 
     def _disable_autos(self):
         if not self.cam.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1):  # 1 disable; 3 enable
