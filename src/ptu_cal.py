@@ -109,9 +109,9 @@ def get_del_y_sift(orig_img, del_y_img, max_size=500, use_closest=False):
     print(mean_dely, "(mean)")
 
     if not use_closest:
-    #     __, ax = plt.subplots(figsize=(12, 12))
-    #     ax = plot_inlier_matches(ax, orig_band, dely_band, top_kp_coords)
-    #     ax.scatter(orig_band.shape[1]+dely_band.shape[1]//2, dely_band.shape[0]//2)
+        __, ax = plt.subplots(figsize=(12, 12))
+        ax = plot_inlier_matches(ax, orig_band, dely_band, top_kp_coords)
+        ax.scatter(orig_band.shape[1]+dely_band.shape[1]//2, dely_band.shape[0]//2)
         return mean_dely
     
     # use the feature closest to del_y center (w/ some viz)
@@ -122,9 +122,9 @@ def get_del_y_sift(orig_img, del_y_img, max_size=500, use_closest=False):
     print(top_dely_kp_fixation_dists[argmin], "@", argmin)
     fixn_kp_coords = top_kp_coords[argmin:argmin+1, :]
     # print(fixn_kp_coords)
-    # __, ax = plt.subplots(figsize=(12, 12))
-    # ax = plot_inlier_matches(ax, orig_band, dely_band, fixn_kp_coords)
-    # ax.scatter(orig_band.shape[1]+dely_band.shape[1]//2,dely_band.shape[0]//2)
+    __, ax = plt.subplots(figsize=(12, 12))
+    ax = plot_inlier_matches(ax, orig_band, dely_band, fixn_kp_coords)
+    ax.scatter(orig_band.shape[1]+dely_band.shape[1]//2,dely_band.shape[0]//2)
 
     closest_dely = fixn_kp_coords[0, 3] - fixn_kp_coords[0, 1]
     print(closest_dely, "(closest)")
@@ -164,9 +164,9 @@ def get_del_x_sift(orig_img, del_x_img, max_size=500, use_closest=False):
     print(mean_delx, "(mean)")
 
     if not use_closest:
-    #     __, ax = plt.subplots(figsize=(12, 12))
-    #     ax = plot_inlier_matches_v(ax, orig_band, delx_band, top_kp_coords)
-    #     ax.scatter(orig_band.shape[1]//2, orig_band.shape[0]+delx_band.shape[0]//2)
+        __, ax = plt.subplots(figsize=(12, 12))
+        ax = plot_inlier_matches_v(ax, orig_band, delx_band, top_kp_coords)
+        ax.scatter(orig_band.shape[1]//2, orig_band.shape[0]+delx_band.shape[0]//2)
         return mean_delx
     
     # use the feature closest to del_y center (w/ some viz)
@@ -177,9 +177,9 @@ def get_del_x_sift(orig_img, del_x_img, max_size=500, use_closest=False):
     print(top_delx_kp_fixation_dists[argmin], "@", argmin)
     fixn_kp_coords = top_kp_coords[argmin:argmin+1, :]
     # print(fixn_kp_coords)
-    # __, ax = plt.subplots(figsize=(12, 12))
-    # ax = plot_inlier_matches_v(ax, orig_band, delx_band, fixn_kp_coords)
-    # ax.scatter(orig_band.shape[1]//2, orig_band.shape[0]+delx_band.shape[0]//2)
+    __, ax = plt.subplots(figsize=(12, 12))
+    ax = plot_inlier_matches_v(ax, orig_band, delx_band, fixn_kp_coords)
+    ax.scatter(orig_band.shape[1]//2, orig_band.shape[0]+delx_band.shape[0]//2)
 
     closest_delx = fixn_kp_coords[0, 3] - fixn_kp_coords[0, 1]
     print(closest_delx, "(closest)")
@@ -206,6 +206,46 @@ def prune_feats(dist, ind_pairs, kp_l, kp_r, des_l, des_r):
     top_kp_pairs = [(kp_l[il], kp_r[ir]) for il, ir in top_ind_pairs]
     top_des_pairs = [(des_l[il], des_r[ir]) for il, ir in top_ind_pairs]
     return top_kp_pairs, top_des_pairs
+
+def plot_inlier_matches(ax, img1, img2, inliers):
+    """
+    Plot the matches between two images according to the matched keypoints
+    :param ax: plot handle
+    :param img1: left image
+    :param img2: right image
+    :inliers: x,y in the first image and x,y in the second image (Nx4)
+    """
+    res = np.hstack([img1, img2])
+    ax.set_aspect('equal')
+    ax.imshow(res, cmap='gray')
+    
+    ax.plot(inliers[:,0], inliers[:,1], '+r')
+    ax.plot(inliers[:,2] + img1.shape[1], inliers[:,3], '+r')
+    ax.plot([inliers[:,0], inliers[:,2] + img1.shape[1]],
+            [inliers[:,1], inliers[:,3]], 'r', linewidth=0.4)
+    ax.axis('off')
+
+    return ax
+
+def plot_inlier_matches_v(ax, img1, img2, inliers):
+    """
+    Plot the matches between two images according to the matched keypoints
+    :param ax: plot handle
+    :param img1: left image
+    :param img2: right image
+    :inliers: x,y in the first image and x,y in the second image (Nx4)
+    """
+    res = np.vstack([img1, img2])
+    ax.set_aspect('equal')
+    ax.imshow(res, cmap='gray')
+    
+    ax.plot(inliers[:,0], inliers[:,1], '+r')
+    ax.plot(inliers[:,2], inliers[:,3] + img1.shape[0], '+r')
+    ax.plot([inliers[:,0], inliers[:,2]],
+            [inliers[:,1], inliers[:,3] + img1.shape[0]], 'r', linewidth=0.4)
+    ax.axis('off')
+
+    return ax
 
 
 if __name__ == '__main__':
