@@ -134,9 +134,10 @@ def get_del_x_sift(orig_img, del_x_img, max_size=500, use_closest=False):
     # crop img center regions
     h, w = del_x_img.shape[:2]
     r = max_size // 2
-    orig_band = orig_img[h//2-r:h//2+r+1, :, :].mean(-1).astype('uint8')
+    lmost_px, rmost_px = w//2-r*4, w//2+r*4  # too much distortion beyond these
+    orig_band = orig_img[h//2-r:h//2+r+1, lmost_px:rmost_px, :].mean(-1).astype('uint8')
     # dely_center = del_y_img[h//2-r-d:h//2+r+1, w//2-r-d:w//2+r+1, :]
-    delx_band = del_x_img[h//2-r:h//2+r+1, :, :].mean(-1).astype('uint8')
+    delx_band = del_x_img[h//2-r:h//2+r+1, lmost_px:rmost_px, :].mean(-1).astype('uint8')
 
     # run sift, sample: https://gitlab.nvision.eecs.yorku.ca/yql/5323-intro-to-cv/-/blob/main/assignments/a3_script.ipynb?expanded=true&viewer=rich
     orig_kp, orig_des = compu_sift(orig_band)
