@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-import core
-from .. import wrapper
+import ptu.core
+import wrapper
 
 START_TILT = -20
 END_TILT = 20
@@ -15,7 +15,7 @@ START_PAN = -15
 END_PAN = 15
 
 def main():
-    ptuc = core.PtuController()
+    ptuc = ptu.core.PtuController()
     ptuc.pan(-150)
     ptuc.tilt(0)
     reti = wrapper.ElpCameraRetina()
