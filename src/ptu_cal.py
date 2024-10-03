@@ -1,3 +1,4 @@
+"""A basic module for PTU calibration."""
 import time
 
 import cv2
@@ -16,35 +17,39 @@ END_PAN = 15
 
 def main():
     ptuc = ptu.core.PtuController()
-    ptuc.pan(-150)
-    ptuc.tilt(0)
     reti = wrapper.ElpCameraRetina()
 
-    # for tilt
+    # calibrate for tilt
     tilt_degrees = []
     del_y_pxs = []
     for degree in range(START_TILT, END_TILT+1):
-        theta = degree/180 * np.pi
         print('deg:', degree)
         orig, dely = capture_two_imgs(ptuc, reti, tilt_deg=degree, pan_deg=-150)
         del_y_px = get_del_y_sift(orig, dely)
 
         tilt_degrees.append(degree)
         del_y_pxs.append(del_y_px)
-    
-    # for pan
+
+    # calibrate for pan
+    # pan should have diff calibration for diff tilt angle, but skipped for now
     pan_degrees = []
     del_x_pxs = []
     for degree in range(START_PAN, END_PAN+1):
-        theta = degree/180 * np.pi
         print('deg:', degree)
-        orig, dely = capture_two_imgs_dx(ptuc, reti, pan_deg=degree)
+        orig, dely = capture_two_imgs_dx(ptuc, reti, pan_deg=degree, tilt_deg=0)
         del_x_px = get_del_x_sift(orig, dely)
 
         pan_degrees.append(degree)
         del_x_pxs.append(del_x_px)
 
     return tilt_degrees, del_y_pxs, pan_degrees, del_x_pxs
+
+# linear calibration results, 2024-oct-03
+# delta_pixel = slope * degree + intercept
+TILT_SLOPE = 28.98246342
+TILT_INTERCEPT = -2.52920662
+PAN_SLOPE = 29.98246751
+PAN_INTERCEPT = -7.84100644
 
 
 def capture_two_imgs(ptuc, reti, tilt_deg, pan_deg=0):
