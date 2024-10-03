@@ -45,7 +45,18 @@ class IRetina(abc.ABC):
     def capture(self):
         pass
 
+class ICalibration(abc.ABC):
+    @abc.abstractmethod
+    def get_pan_deg(self):
+        pass
+
+    @abc.abstractmethod
+    def get_tilt_deg(self):
+        pass
+
 class IEyeMover(abc.ABC):
+    calibration: ICalibration
+
     @abc.abstractmethod
     def saccade(self, next_fixation: NextFixation):
         pass
@@ -236,18 +247,40 @@ class PtuEyeMover(IEyeMover):
     For command, cf doc *Pan-tilt Unit User's Manual*."""
     PORT_NAME = '/dev/ttyUSB0'
 
-    TILT_ARM_LEN_MM = 62
+    TILT_ARM_LEN_MM = 62  # not used
 
-    def __init__(self):
+    def __init__(self, calibration: ICalibration):
         self.ptu_ctrl = ptu.core.PtuController(self.PORT_NAME)
+        self.calibration = calibration
 
     def saccade(self, next_fixation: NextFixation):
-        pass  # TODO the actual calculation
-        self.ptu_ctrl.run_cmd(f'pp{next_fixation.h_pixel} ')
-        self.ptu_ctrl.run_cmd(f'tp{next_fixation.v_pixel} ')
+        pan_deg = self.calibration.get_pan_deg(next_fixation.rel_h_pixel)
+        tilt_deg = self.calibration.get_tilt_deg(next_fixation.rel_v_pixel)
+
+        print("Panning", pan_deg)
+        self.ptu_ctrl.pan(pan_deg, relative=True)
+        print("Tilting", tilt_deg)
+        self.ptu_ctrl.tilt(tilt_deg, relative=True)
 
     def _send_cmd(self, cmd):
         self.ser.write(cmd.encode('ascii'))
+
+
+class LinearCalibration(ICalibration):
+    # linear calibration results, by least sqaure fit, 2024-oct-03
+    # delta_pixel = slope * degree + intercept
+    TILT_SLOPE = -28.98246342
+    TILT_INTERCEPT = 2.52920662  # should be 0 in theory
+    PAN_SLOPE = -29.98246751
+    PAN_INTERCEPT = 7.84100644  # should be 0 in theory
+
+    def get_pan_deg(self, del_x_px):
+        pan_deg = (del_x_px - self.PAN_INTERCEPT) / self.PAN_SLOPE
+        return pan_deg
+
+    def get_tilt_deg(self, del_y_px):
+        tilt_deg = (del_y_px - self.TILT_INTERCEPT) / self.TILT_SLOPE
+        return tilt_deg
 
 
 class BasicEye(IEye):
