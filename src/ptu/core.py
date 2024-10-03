@@ -30,15 +30,17 @@ class PtuController:
             print(ret)
         return ret.decode()
 
-    def pan(self, degrees: float):
+    def pan(self, degrees: float, relative=False):
+        flag = 'o' if relative else 'p'
         pos = round(degrees * 3600 / self.ARCSEC_PER_POS)
-        res = self.run_cmd(f'pp{pos} ')
+        res = self.run_cmd(f'p{flag}{pos} ')
         if '!' in res:
             raise RuntimeError(f"Failed to pan: {res}")
 
-    def tilt(self, degrees: float):
+    def tilt(self, degrees: float, relative=False):
+        flag = 'o' if relative else 'p'
         pos = round(degrees * 3600 / self.ARCSEC_PER_POS)
-        res = self.run_cmd(f'tp{pos} ')
+        res = self.run_cmd(f't{flag}{pos} ')
         if '!' in res:
             raise RuntimeError(f"Failed to tilt: {res}")
 

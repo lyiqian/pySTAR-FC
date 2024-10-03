@@ -14,9 +14,12 @@ class NextFixation:
     h_pixel: int
     v_pixel: int
 
-    def __init__(self, coords):
+    def __init__(self, coords, rel_coords=None):
         self.h_pixel = int(coords[0])
         self.v_pixel = int(coords[1])
+        if rel_coords is not None:
+            self.rel_h_pixel = int(rel_coords[0])
+            self.rel_v_pixel = int(rel_coords[1])
 
     def __str__(self) -> str:
         return f'H: {self.h_pixel}, V: {self.v_pixel}'
@@ -139,7 +142,8 @@ class FileFixationLoader(IFixationLoader):
         fix_data = spio.loadmat(fixation_src)
         fixs = fix_data['fixations']
         next_coords = fixs[1]  # 0 always the central starting point
-        next_fixation = NextFixation(next_coords)
+        rel_next_coords = (fixs[1][0]-fixs[0][0], fixs[1][1]-fixs[0][1])
+        next_fixation = NextFixation(next_coords, rel_coords=rel_next_coords)
         print("loaded next fixation:", next_fixation)
 
         return next_fixation
