@@ -62,7 +62,7 @@ def capture_two_imgs(ptuc, reti, tilt_deg, pan_deg=0):
 
 def capture_two_imgs_dx(ptuc, reti, pan_deg, tilt_deg=0):
     ptuc.tilt(tilt_deg)
-    ptuc.pan(-135)  #starting pan
+    ptuc.pan(-135)  # starting pan; Markus desk good to SIFT :)
     time.sleep(2)
     img_src = reti.capture()
     orig_img = plt.imread(img_src)
@@ -137,7 +137,7 @@ def get_del_x_sift(orig_img, delx_img, max_size=500, use_closest=False):
     orig_band = orig_img[h//2-r:h//2+r+1, lmost_px:rmost_px, :].mean(-1).astype('uint8')
     delx_band = delx_img[h//2-r:h//2+r+1, lmost_px:rmost_px, :].mean(-1).astype('uint8')
 
-    # run sift, sample: https://gitlab.nvision.eecs.yorku.ca/yql/5323-intro-to-cv/-/blob/main/assignments/a3_script.ipynb?expanded=true&viewer=rich
+    # run sift
     orig_kp, orig_des = compu_sift(orig_band)
     delx_kp, delx_des = compu_sift(delx_band)
     print(orig_des.shape, delx_des.shape)
@@ -159,7 +159,7 @@ def get_del_x_sift(orig_img, delx_img, max_size=500, use_closest=False):
     top_kp_pairs, top_des_pairs = prune_feats(dist, ind_pairs, orig_kp, delx_kp_, orig_des, delx_des_)
     top_kp_coords = np.array([[*o_kp.pt, *x_kp.pt] for o_kp, x_kp in top_kp_pairs])
 
-    mean_delx = np.mean(top_kp_coords[:, 3] - top_kp_coords[:, 1])
+    mean_delx = np.mean(top_kp_coords[:, 2] - top_kp_coords[:, 0])
     print(mean_delx, "(mean)")
 
     if not use_closest:
@@ -180,7 +180,7 @@ def get_del_x_sift(orig_img, delx_img, max_size=500, use_closest=False):
     ax = plot_inlier_matches_v(ax, orig_band, delx_band, fixn_kp_coords)
     ax.scatter(orig_band.shape[1]//2, orig_band.shape[0]+delx_band.shape[0]//2)
 
-    closest_delx = fixn_kp_coords[0, 3] - fixn_kp_coords[0, 1]
+    closest_delx = fixn_kp_coords[0, 2] - fixn_kp_coords[0, 0]
     print(closest_delx, "(closest)")
     return closest_delx
 
