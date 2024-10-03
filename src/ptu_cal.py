@@ -42,6 +42,15 @@ def main():
         pan_degrees.append(degree)
         del_x_pxs.append(del_x_px)
 
+    # least square fit for pan calibration, as an example, copied from notebook
+    coefs = np.column_stack((pan_degrees, np.ones_like(pan_degrees)))
+    dep_var = -del_x_pxs  # negate for easier downstream compu
+    ls_res, __, __, __ = np.linalg.lstsq(coefs, dep_var)
+    print(ls_res, 'del X')
+    plt.scatter(pan_degrees, dep_var)
+    plt.plot(pan_degrees, ls_res[0]*np.asarray(pan_degrees)+ls_res[1], c='grey')
+    pan_slope, pan_intercept = ls_res
+
     return tilt_degrees, del_y_pxs, pan_degrees, del_x_pxs
 
 # linear calibration results, 2024-oct-03
