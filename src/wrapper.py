@@ -134,6 +134,8 @@ class FileImageReader(IImageReader):
         return img
 
 
+RESCALE_FACTOR = 5  # as current STAR-FC on GSV can only handles 1024x1024
+
 class SshImageReader(IImageReader):
     """This acts as a POST."""
     REMOTE_IMG_PATH = f'{REMOTE_ROOT}/images/{REMOTE_IMG_FILENAME}'
@@ -142,6 +144,12 @@ class SshImageReader(IImageReader):
         self.conn = ssh_conn
 
     def read(self, img_src):
+        print("Rescadling image to avoid OOM")
+        img = cv2.imread(img_src)
+        curr_h, curr_w = img.shape[0], img.shape[1]
+        resized_img = cv2.resize(img, (curr_w//RESCALE_FACTOR, curr_h//RESCALE_FACTOR))
+        cv2.imwrite(img_src, resized_img)
+
         print("Putting to", self.REMOTE_IMG_PATH)
         self.conn.put(img_src, remote=self.REMOTE_IMG_PATH)
         return self.REMOTE_IMG_PATH
@@ -154,6 +162,11 @@ class FileFixationLoader(IFixationLoader):
         fixs = fix_data['fixations']
         next_coords = fixs[1]  # 0 always the central starting point
         rel_next_coords = (fixs[1][0]-fixs[0][0], fixs[1][1]-fixs[0][1])
+
+        print("Rescaling fixation coords back due to prev image rescaling")
+        next_coords = (next_coords[0]*RESCALE_FACTOR, next_coords[1]*RESCALE_FACTOR)
+        rel_next_coords = (rel_next_coords[0]*RESCALE_FACTOR, rel_next_coords[1]*RESCALE_FACTOR)
+
         next_fixation = NextFixation(next_coords, rel_coords=rel_next_coords)
         print("loaded next fixation:", next_fixation)
 
@@ -294,7 +307,7 @@ if __name__ == '__main__':
     ssh_conn = fabric.Connection(GSV_CONN_STRING, connect_kwargs=dict(password=MYPASS))
 
     retina = ElpCameraRetina()
-    mover = PtuEyeMover()
+    mover = PtuEyeMover(LinearCalibration())
     eye = BasicEye(retina, mover)
 
     img_reader = SshImageReader(ssh_conn)
@@ -304,3 +317,5 @@ if __name__ == '__main__':
     gsv_stfc.connect(ssh_conn)
 
     gsv_stfc.process_single()
+
+    retina.close()
