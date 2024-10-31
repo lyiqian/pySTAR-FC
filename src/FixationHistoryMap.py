@@ -84,8 +84,8 @@ class FixationHistory:
             fixHistMap = np.fmax(fixHistMap, np.zeros((h, w)))
 
             # compute new IoR region
-            for i in fixHistMap.shape[0]:
-                for j in fixHistMap.shape[1]:
+            for i in range(fixHistMap.shape[0]):
+                for j in range(fixHistMap.shape[1]):
                     homo_coord = np.asarray([j*self.RESCALE_FACTOR, i*self.RESCALE_FACTOR, 1])
                     ray = np.matmul(cali_mat_inv, homo_coord)
                     normalized = ray/np.linalg.norm(ray)
