@@ -1,7 +1,10 @@
+import logging as lgg
 import sys
 import getopt
 from Settings import Settings
 
+lgg.basicConfig(stream=sys.stdout, level=lgg.INFO, force=True,
+                format="%(asctime)s [%(levelname)s] %(message)s")
 
 def usage():
     print('Usage: python3 STAR_FC.py [options]')

@@ -44,3 +44,7 @@ class FixationHistoryMap:
     def dumpFixationsToMat(self, savePath):
         fixationList = np.fliplr(self.fixationList).astype(np.float64) # flip array since save format is [horz_coord, vert_coord]
         sio.savemat(savePath, {'fixations': fixationList})
+
+
+class FixationHistorySphere:
+    pass # TODO

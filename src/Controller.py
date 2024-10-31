@@ -92,6 +92,23 @@ class Controller:
                     self.fixHistMap.dumpFixationsToMat('{}/fixations_{}.mat'.format(currentSaveDir, self.imgName, i))
                     cv2.imwrite('{}/fixations_{}.png'.format(currentSaveDir, self.imgName), self.env.sceneWithFixations.astype(np.uint8))
 
+    def runEmbodied(self):
+        self.getInputImages()
+        imgPath = self.imageList[0]
+        self.setup(imgPath)
+
+        history = self.loadFixtHistory()
+        self.computeFixation(history)
+
+        # old fixHistMap serves as an exporter for next fixation coord
+        nextGazeCoords = self.eye.gazeCoords.copy()
+        self.fixHistMap.saveFixationCoords(nextGazeCoords)
+        lgg.info('NextGazeCoords=[{}, {}]'.format(nextGazeCoords[0], nextGazeCoords[1]))
+
+        currentSaveDir = '{}/{}/'.format(self.settings.saveDir, self.imgName)
+        self.fixHistMap.dumpFixationsToMat('{}/fixations_0.mat'.format(currentSaveDir, self.imgName))
+        cv2.imwrite('{}/fixations_0.png'.format(currentSaveDir, self.imgName), self.env.sceneWithFixations.astype(np.uint8))
+
     def computeFixations(self):
 
         for i in range(self.settings.maxNumFixations):
@@ -158,6 +175,36 @@ class Controller:
                 t_vis = time.time() - t0
                 print('[vis] Time elapsed {:0.03f}'.format(t_vis))
                 plt.pause(0.01)
+
+    def loadFixtHistory(self):
+        pass # TODO 1. FixationHistorySphere class; 2. decay
+
+    def computeFixation(self, history):
+        lgg.info("viewing scene")
+        self.eye.viewScene()
+
+        prevGazeCoords = self.eye.gazeCoords.copy()
+        lgg.info('PrevGazeCoords=[{}, {}]'.format(prevGazeCoords[0], prevGazeCoords[1]))
+
+        lgg.info("Computing peripheral map")
+        self.periphMap.computeBUSaliency(self.eye.viewFov)
+        self.periphMap.computePeriphMap(self.settings.blendingStrategy==1)
+
+        lgg.info("Computing central map")
+        self.centralMap.centralDetection(self.eye.viewFov)
+        self.centralMap.maskCentralDetection()
+
+        lgg.info("Saving fixation coordinates")
+        self.fixHistMap.saveFixationCoords(prevGazeCoords)
+
+        lgg.info("Computing priority map")
+        # TODO
+        self.priorityMap.computeNextFixationDirection(self.periphMap.periphMap, self.centralMap.centralMap, self.fixHistMap.getFixationHistoryMap())
+
+        self.eye.setGazeCoords(self.priorityMap.nextFixationDirection)
+
+        self.env.drawFixation(self.eye.gazeCoords.astype(np.int32), prevGazeCoords)
+
 
     def add_subplot(self, fig, img, title, plot_idx):
         ax = fig.add_subplot(plot_idx)
