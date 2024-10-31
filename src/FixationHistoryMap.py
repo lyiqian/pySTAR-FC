@@ -2,6 +2,7 @@ import pickle
 import scipy.io as sio
 import numpy as np
 import math
+import logging as lgg
 
 class FixationHistoryMap:
     def __init__(self, h, w, hPadded, wPadded, settings):
@@ -78,6 +79,7 @@ class FixationHistory:
         fixHistMap = np.zeros((h, w), dtype=np.float32)
         cali_mat_inv = np.linalg.inv(self.CALI_MAT)
         min_cos_sim = np.cos(settings.iorSizeDeg/2/180*np.pi)
+        lgg.info("Min cosine similarity: %s", min_cos_sim)
         for x, y, z in self.fixt_history_sphere:
             # decay first
             fixHistMap -= 1/settings.iorDecayRate
@@ -94,4 +96,5 @@ class FixationHistory:
                         # TODO based on distance
                         fixHistMap[i, j] = 1
 
+        lgg.info("Total IoR strength: %s", fixHistMap.sum())
         return fixHistMap
