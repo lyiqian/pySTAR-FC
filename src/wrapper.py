@@ -104,7 +104,7 @@ class GsvSTFC(AbstractEmbodiedSTFC):
 
     # output format depends on `dumpFixationsToMat`
     IMG_NAME = REMOTE_IMG_FILENAME.rsplit('.', maxsplit=1)[0]
-    FIXATION_OUTPUT_PATH = f'{REMOTE_ROOT}/output/{IMG_NAME}/fixations_{IMG_NAME}.mat'
+    FIXATION_OUTPUT_PATH = f'{REMOTE_ROOT}/output/{IMG_NAME}/fixations_0.mat'
 
     def connect(self, ssh_conn):
         self.ssh_conn = ssh_conn
@@ -116,7 +116,7 @@ class GsvSTFC(AbstractEmbodiedSTFC):
         print("Calc next fixation")
         cmd = (
             f'cd ~/repos/pySTAR-FC/docker '
-            f'&& sudo docker exec starfc python3 src/STAR_FC.py -v -c {self.CONFIG_PATH}'
+            f'&& sudo docker exec starfc python3 src/STAR_FC.py -e -c {self.CONFIG_PATH}'
         )
         sudopass = invoke.Responder(pattern=r'\[sudo\] password for eason:', response=MYPASS+'\n')
         run_fc_result = self.ssh_conn.run(cmd, pty=True, watchers=[sudopass])

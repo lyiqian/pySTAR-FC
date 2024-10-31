@@ -107,8 +107,8 @@ class Controller:
         lgg.info('NextGazeCoords=[{}, {}]'.format(nextGazeCoords[0], nextGazeCoords[1]))
 
         currentSaveDir = '{}/{}/'.format(self.settings.saveDir, self.imgName)
-        self.fixHistMap.dumpFixationsToMat('{}/fixations_0.mat'.format(currentSaveDir, self.imgName))
-        cv2.imwrite('{}/fixations_0.png'.format(currentSaveDir, self.imgName), self.env.sceneWithFixations.astype(np.uint8))
+        self.fixHistMap.dumpFixationsToMat('{}/fixations_0.mat'.format(currentSaveDir))
+        cv2.imwrite('{}/fixations_0.png'.format(currentSaveDir), self.env.sceneWithFixations.astype(np.uint8))
 
     def computeFixations(self):
 
