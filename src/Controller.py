@@ -4,6 +4,7 @@ import numpy as np
 import cv2
 
 import time
+import logging as lgg
 
 from Environment import Environment
 from PeripheralAttentionalMap import PeripheralAttentionalMap

@@ -14,10 +14,11 @@ def usage():
     print('-h, --help\t\t', 'Displays this help')
     print('-c <configFilePath>\t', 'Full path to confi file')
     print('-v,\t\t\t', 'Visualize results')
+    print('-e,\t\t\t', 'Run embodied version')
 
 def main(argv):
     try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hc:v', ['help','configFile', 'verbose'])
+        opts, args = getopt.getopt(sys.argv[1:], 'hc:ve', ['help', 'configFile', 'viz', 'embodied'])
     except getopt.GetoptError as err:
         print(str(err))
         usage()
@@ -25,6 +26,7 @@ def main(argv):
 
     visualize = False
     iniFilePath = None
+    embodied = False
 
     for o, a in opts:
         if o == "-v":
@@ -34,6 +36,8 @@ def main(argv):
             sys.exit(2)
         elif o == "-c":
             iniFilePath = a
+        elif o == "-e":
+            embodied = True
 
     if not iniFilePath:
         print('ERROR: .ini config file not provided!')
@@ -44,7 +48,10 @@ def main(argv):
 
     settings = Settings(iniFilePath, visualize)
     controller = Controller(settings)
-    controller.run()
+    if embodied:
+        controller.runEmbodied()
+    else:
+        controller.run()
 
 if __name__ == '__main__':
     main(sys.argv)
