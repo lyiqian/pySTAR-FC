@@ -180,7 +180,7 @@ class Controller:
 
     def loadFixtHistory(self, fixtPath):
         history = FixationHistory(fixtPath)
-        lgg.info("Loaded Fixt History:", history.motor_history)
+        lgg.info("Loaded Fixt History: %s", history.motor_history)
         pass # TODO 1. FixationHistorySphere class; 2. decay
 
     def computeFixation(self, history):
