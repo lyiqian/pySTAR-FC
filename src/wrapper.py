@@ -1,5 +1,6 @@
 import abc
 import os
+import pickle
 import random
 
 import cv2
@@ -56,6 +57,7 @@ class ICalibration(abc.ABC):
 
 class IEyeMover(abc.ABC):
     calibration: ICalibration
+    motor_history: list
 
     @abc.abstractmethod
     def saccade(self, next_fixation: NextFixation):
@@ -77,14 +79,17 @@ class AbstractEmbodiedSTFC(abc.ABC):
         self.eye = eye
 
     @abc.abstractmethod
-    def calc_fixation(self, image):
+    def calc_fixation(self, image, fixation_history):
         pass
 
     def process_single(self):
         img_src = self.eye.retina.capture()
 
+        with open(img_src.replace('.jpg', '.pkl'), 'wb') as fo:
+            pickle.dump(self.eye.eye_mover.motor_history, fo)
+
         image = self.img_reader.read(img_src)
-        fixation_src = self.calc_fixation(image)
+        fixation_src = self.calc_fixation(image, self.eye.eye_mover.motor_history)
 
         next_fixation = self.fixation_loader.load(fixation_src)
         self.eye.eye_mover.saccade(next_fixation)
@@ -109,7 +114,7 @@ class GsvSTFC(AbstractEmbodiedSTFC):
     def connect(self, ssh_conn):
         self.ssh_conn = ssh_conn
 
-    def calc_fixation(self, image):
+    def calc_fixation(self, image, fixation_history):
         assert isinstance(image, str)  # just a path returned from ssh img reader
         assert image.endswith(REMOTE_IMG_FILENAME)
 
@@ -137,7 +142,7 @@ class FileImageReader(IImageReader):
 RESCALE_FACTOR = 5  # as current STAR-FC on GSV can only handles 1024x1024
 
 class SshImageReader(IImageReader):
-    """This acts as a POST."""
+    """This acts as a POST. And now also posts fixation history"""
     REMOTE_IMG_PATH = f'{REMOTE_ROOT}/images/{REMOTE_IMG_FILENAME}'
 
     def __init__(self, ssh_conn) -> None:
@@ -152,6 +157,9 @@ class SshImageReader(IImageReader):
 
         print("Putting to", self.REMOTE_IMG_PATH)
         self.conn.put(img_src, remote=self.REMOTE_IMG_PATH)
+        # motor history
+        self.conn.put(img_src.replace('.jpg', '.pkl'),
+                      remote=self.REMOTE_IMG_PATH.replace('.jpg', '.pkl'))
         return self.REMOTE_IMG_PATH
 
 
@@ -265,6 +273,7 @@ class PtuEyeMover(IEyeMover):
     def __init__(self, calibration: ICalibration):
         self.ptu_ctrl = ptu.core.PtuController(self.PORT_NAME)
         self.calibration = calibration
+        self.motor_history = [(0, 0)]
 
     def saccade(self, next_fixation: NextFixation):
         pan_deg = self.calibration.get_pan_deg(next_fixation.rel_h_pixel)
@@ -274,6 +283,8 @@ class PtuEyeMover(IEyeMover):
         self.ptu_ctrl.pan(pan_deg, relative=True)
         print("Tilting", tilt_deg)
         self.ptu_ctrl.tilt(tilt_deg, relative=True)
+
+        self.motor_history.append((pan_deg, tilt_deg))
 
     def _send_cmd(self, cmd):
         self.ser.write(cmd.encode('ascii'))

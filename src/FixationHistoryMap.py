@@ -1,3 +1,4 @@
+import pickle
 import scipy.io as sio
 import numpy as np
 import math
@@ -46,5 +47,9 @@ class FixationHistoryMap:
         sio.savemat(savePath, {'fixations': fixationList})
 
 
-class FixationHistorySphere:
+class FixationHistory:
+    def __init__(self, path):
+        with open(path, 'rb') as fi:
+            self.motor_history = pickle.load(fi)
+
     pass # TODO

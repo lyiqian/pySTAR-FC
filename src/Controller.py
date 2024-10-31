@@ -11,7 +11,7 @@ from PeripheralAttentionalMap import PeripheralAttentionalMap
 from CentralAttentionalMap import CentralAttentionalMap
 from ConspicuityMap import ConspicuityMap
 from PriorityMap import PriorityMap
-from FixationHistoryMap import FixationHistoryMap
+from FixationHistoryMap import FixationHistoryMap, FixationHistory
 from Eye import Eye
 
 import matplotlib.pyplot as plt
@@ -98,7 +98,8 @@ class Controller:
         imgPath = self.imageList[0]
         self.setup(imgPath)
 
-        history = self.loadFixtHistory()
+        fixtPath = imgPath.replace('.jpg', '.pkl')
+        history = self.loadFixtHistory(fixtPath)
         self.computeFixation(history)
 
         # old fixHistMap serves as an exporter for next fixation coord
@@ -177,7 +178,9 @@ class Controller:
                 print('[vis] Time elapsed {:0.03f}'.format(t_vis))
                 plt.pause(0.01)
 
-    def loadFixtHistory(self):
+    def loadFixtHistory(self, fixtPath):
+        history = FixationHistory(fixtPath)
+        lgg.info("Loaded Fixt History:", history.motor_history)
         pass # TODO 1. FixationHistorySphere class; 2. decay
 
     def computeFixation(self, history):
