@@ -205,7 +205,7 @@ class Controller:
         fixHistMap = history.getFixationHistoryMap(self.env.height, self.env.width, self.settings)
 
         currSaveDir = '{}/{}'.format(self.settings.saveDir, self.imgName)
-        cv2.imwrite('{}/fixt_hist.png'.format(currSaveDir), fixHistMap)
+        cv2.imwrite('{}/fixt_hist.png'.format(currSaveDir), (fixHistMap*255).astype(np.uint8))
 
         lgg.info("Computing priority map")
         self.priorityMap.computeNextFixationDirection(
