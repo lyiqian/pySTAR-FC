@@ -107,7 +107,7 @@ class Controller:
         self.fixHistMap.saveFixationCoords(nextGazeCoords)
         lgg.info('NextGazeCoords=[{}, {}]'.format(nextGazeCoords[0], nextGazeCoords[1]))
 
-        currentSaveDir = '{}/{}/'.format(self.settings.saveDir, self.imgName)
+        currentSaveDir = '{}/{}'.format(self.settings.saveDir, self.imgName)
         self.fixHistMap.dumpFixationsToMat('{}/fixations_0.mat'.format(currentSaveDir))
         cv2.imwrite('{}/fixations_0.png'.format(currentSaveDir), self.env.sceneWithFixations.astype(np.uint8))
 
@@ -180,10 +180,10 @@ class Controller:
 
     def loadFixtHistory(self, fixtPath):
         history = FixationHistory(fixtPath)
-        lgg.info("Loaded Fixt History: %s", history.motor_history)
-        pass # TODO 1. FixationHistorySphere class; 2. decay
+        lgg.info("Loaded Fixt History (relative, unit sphere): %s", history.fixt_history_sphere)
+        return history
 
-    def computeFixation(self, history):
+    def computeFixation(self, history: FixationHistory):
         lgg.info("viewing scene")
         self.eye.viewScene()
 
@@ -201,12 +201,17 @@ class Controller:
         lgg.info("Saving fixation coordinates")
         self.fixHistMap.saveFixationCoords(prevGazeCoords)
 
+        lgg.info("Computing fixation history map")
+        fixHistMap = history.getFixationHistoryMap(self.env.height, self.env.width, self.settings)
+
+        currSaveDir = '{}/{}'.format(self.settings.saveDir, self.imgName)
+        cv2.imwrite('{}/fixt_hist.png'.format(currSaveDir), fixHistMap)
+
         lgg.info("Computing priority map")
-        # TODO
-        self.priorityMap.computeNextFixationDirection(self.periphMap.periphMap, self.centralMap.centralMap, self.fixHistMap.getFixationHistoryMap())
+        self.priorityMap.computeNextFixationDirection(
+            self.periphMap.periphMap, self.centralMap.centralMap, fixHistMap)
 
         self.eye.setGazeCoords(self.priorityMap.nextFixationDirection)
-
         self.env.drawFixation(self.eye.gazeCoords.astype(np.int32), prevGazeCoords)
 
 

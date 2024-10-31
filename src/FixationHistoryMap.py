@@ -48,8 +48,50 @@ class FixationHistoryMap:
 
 
 class FixationHistory:
+    CALI_MAT = np.asarray(
+        [[1.8/0.00112, 0, 4656/2],
+         [0, 1.8/0.00112, 3496/2],
+         [0, 0, 1]]
+    )
+    RESCALE_FACTOR = 5
+
     def __init__(self, path):
         with open(path, 'rb') as fi:
-            self.motor_history = pickle.load(fi)
+            self.motor_history = np.asarray(pickle.load(fi))
 
-    pass # TODO
+        # accumulate motor commands to get fixation history
+        self.fixt_history = self.motor_history.cumsum(axis=0)
+
+        # relative to current fixation
+        self.fixt_history_rel = self.fixt_history - self.fixt_history[-1, :]
+
+        # convert polar to cartesian
+        self.fixt_history_sphere = []  # on unit sphere
+        for p_deg, t_deg in self.fixt_history_rel:
+            p_rad, t_rad = p_deg/180*np.pi, t_deg/180*np.pi
+            x = np.cos(t_rad) * np.sin(p_rad)
+            y = np.sin(t_rad)
+            z = np.cos(t_rad) * np.cos(p_rad)
+            self.fixt_history_sphere.append((x, y, z))
+
+    def getFixationHistoryMap(self, h, w, settings):
+        fixHistMap = np.zeros((h, w), dtype=np.float32)
+        cali_mat_inv = np.linalg.inv(self.CALI_MAT)
+        min_cos_sim = np.cos(settings.iorSizeDeg/2/180*np.pi)
+        for x, y, z in self.fixt_history_sphere:
+            # decay first
+            fixHistMap -= 1/settings.iorDecayRate
+            fixHistMap = np.fmax(fixHistMap, np.zeros((h, w)))
+
+            # compute new IoR region
+            for i in fixHistMap.shape(0):
+                for j in fixHistMap.shape(1):
+                    homo_coord = np.asarray([j*self.RESCALE_FACTOR, i*self.RESCALE_FACTOR, 1])
+                    ray = np.matmul(cali_mat_inv, homo_coord)
+                    normalized = ray/np.linalg.norm(ray)
+                    cos_sim = np.dot(normalized, np.array([x, y, z]))
+                    if cos_sim >= min_cos_sim:
+                        # TODO based on distance
+                        fixHistMap[i, j] = 1
+
+        return fixHistMap
