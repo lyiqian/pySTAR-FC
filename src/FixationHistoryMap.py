@@ -70,16 +70,15 @@ class FixationHistory:
         self.fixt_history_sphere = []  # on unit sphere
         for p_deg, t_deg in self.fixt_history_rel:
             p_rad, t_rad = p_deg/180*np.pi, t_deg/180*np.pi
-            x = np.cos(t_rad) * np.sin(p_rad)
-            y = np.sin(t_rad)
-            z = np.cos(t_rad) * np.cos(p_rad)
+            x = np.cos(-t_rad) * np.sin(-p_rad)
+            y = np.sin(-t_rad)
+            z = np.cos(-t_rad) * np.cos(-p_rad)
             self.fixt_history_sphere.append((x, y, z))
 
     def getFixationHistoryMap(self, h, w, settings):
         fixHistMap = np.zeros((h, w), dtype=np.float32)
         cali_mat_inv = np.linalg.inv(self.CALI_MAT)
         min_cos_sim = np.cos(settings.iorSizeDeg/2/180*np.pi)
-        lgg.info("Min cosine similarity: %s", min_cos_sim)
         for x, y, z in self.fixt_history_sphere:
             # decay first
             fixHistMap -= 1/settings.iorDecayRate
