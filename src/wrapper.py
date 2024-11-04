@@ -279,12 +279,18 @@ class PtuEyeMover(IEyeMover):
         pan_deg = self.calibration.get_pan_deg(next_fixation.rel_h_pixel)
         tilt_deg = self.calibration.get_tilt_deg(next_fixation.rel_v_pixel)
 
-        print("Panning", pan_deg)
-        self.ptu_ctrl.pan(pan_deg, relative=True)
-        print("Tilting", tilt_deg)
-        self.ptu_ctrl.tilt(tilt_deg, relative=True)
+        prev_pan, prev_tilt = self.ptu_ctrl.pan_pos, self.ptu_ctrl.tilt_pos
 
-        self.motor_history.append((pan_deg, tilt_deg))
+        print("Panning", pan_deg)
+        self.ptu_ctrl.pan(pan_deg, relative=True, safe=True)
+        print("Tilting", tilt_deg)
+        self.ptu_ctrl.tilt(tilt_deg, relative=True, safe=True)
+
+        self.ptu_ctrl.wait()
+        self.ptu_ctrl.update_pan_tilt_pos()
+        pan_deg_, tilt_deg_ = self.ptu_ctrl.calc_last_pan_tilt_degrees(prev_pan, prev_tilt)
+
+        self.motor_history.append((pan_deg_, tilt_deg_))
 
     def _send_cmd(self, cmd):
         self.ser.write(cmd.encode('ascii'))
