@@ -19,6 +19,8 @@ class PtuController:
 
         self.pan(0)
         self.tilt(0)
+        self.pan_pos = 0
+        self.tilt_pos = 0
 
     def run_cmd(self, cmd):
         """Run a command, using syntax specified in the manual."""
@@ -32,17 +34,35 @@ class PtuController:
 
     def pan(self, degrees: float, relative=False):
         flag = 'o' if relative else 'p'
-        pos = round(degrees * 3600 / self.ARCSEC_PER_POS)
+        pos = self.to_position(degrees)
         res = self.run_cmd(f'p{flag}{pos} ')
         if '!' in res:
             raise RuntimeError(f"Failed to pan: {res}")
 
     def tilt(self, degrees: float, relative=False):
         flag = 'o' if relative else 'p'
-        pos = round(degrees * 3600 / self.ARCSEC_PER_POS)
+        pos = self.to_position(degrees)
         res = self.run_cmd(f't{flag}{pos} ')
         if '!' in res:
             raise RuntimeError(f"Failed to tilt: {res}")
+
+    def wait(self):
+        self.run_cmd('a ')
+
+    def update_pan_tilt_pos(self):
+        res = self.run_cmd('pp ')
+        # 'pp * Current Pan position is 389\r\n'
+        self.pan_pos = int(res.split()[-1])
+
+        res = self.run_cmd('tp ')
+        # 'tp * Current Tilt position is -292\r\n'
+        self.tilt_pos = int(res.split()[-1])
+
+    def to_degrees(self, pos):
+        return pos * self.ARCSEC_PER_POS / 3600
+
+    def to_position(self, degrees):
+        return round(degrees * 3600 / self.ARCSEC_PER_POS)
 
     def reset(self):
         """Reset, and self-calibrate."""
