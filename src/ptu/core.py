@@ -9,7 +9,7 @@ class PtuController:
     ARCSEC_PER_POS = 185.1429  # run_cmd('pr ') or run_cmd('tr ')
 
     def __init__(self, port_name=DEFAULT_PORT_NAME) -> None:
-        self.ser = serial.Serial(port_name, 9600, timeout=1)
+        self.ser = serial.Serial(port_name, 9600, timeout=10)
         self.ser.xonxoff = True
         self.ser.isOpen()
 
