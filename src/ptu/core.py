@@ -29,22 +29,34 @@ class PtuController:
 
         ret = self.ser.read_until()
         if DEBUG:
-            print(ret)
+            print(f"Ran [{cmd}]; ret was: [{ret}]")
         return ret.decode()
 
-    def pan(self, degrees: float, relative=False):
+    def pan(self, degrees: float, relative=False, safe=False):
         flag = 'o' if relative else 'p'
         pos = self.to_position(degrees)
         res = self.run_cmd(f'p{flag}{pos} ')
-        if '!' in res:
-            raise RuntimeError(f"Failed to pan: {res}")
 
-    def tilt(self, degrees: float, relative=False):
+        if '!' in res:  # 'Failed to pan: pp-3500 ! Minimum allowable Pan position is -3076'
+            if safe:
+                extreme_pos = int(res.split()[-1])
+                self.run_cmd(f'pp{extreme_pos} ')
+                print("Reached pan limit: ", extreme_pos)
+            else:
+                raise RuntimeError(f"Failed to pan: {res}")
+
+    def tilt(self, degrees: float, relative=False, safe=False):
         flag = 'o' if relative else 'p'
         pos = self.to_position(degrees)
         res = self.run_cmd(f't{flag}{pos} ')
-        if '!' in res:
-            raise RuntimeError(f"Failed to tilt: {res}")
+
+        if '!' in res:  # 'tp681 ! Maximum allowable Tilt position is 602'
+            if safe:
+                extreme_pos = int(res.split()[-1])
+                self.run_cmd(f'tp{extreme_pos} ')
+                print("Reached tilt limit: ", extreme_pos)
+            else:
+                raise RuntimeError(f"Failed to tilt: {res}")
 
     def wait(self):
         self.run_cmd('a ')
