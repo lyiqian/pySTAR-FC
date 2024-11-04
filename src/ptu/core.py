@@ -52,11 +52,26 @@ class PtuController:
     def update_pan_tilt_pos(self):
         res = self.run_cmd('pp ')
         # 'pp * Current Pan position is 389\r\n'
-        self.pan_pos = int(res.split()[-1])
+        try:
+            self.pan_pos = int(res.split()[-1])
+        except Exception as e:
+            print("res was: ", res)
+            raise
 
         res = self.run_cmd('tp ')
         # 'tp * Current Tilt position is -292\r\n'
-        self.tilt_pos = int(res.split()[-1])
+        try:
+            self.tilt_pos = int(res.split()[-1])
+        except Exception as e:
+            print("res was: ", res)
+            raise
+
+    def calc_last_pan_tilt_degrees(self, prev_pan_pos, prev_tilt_pos):
+        rel_pan_pos = self.pan_pos - prev_pan_pos
+        rel_tilt_pos = self.tilt_pos - prev_tilt_pos
+        pan_deg = self.to_degrees(rel_pan_pos)
+        tilt_deg = self.to_degrees(rel_tilt_pos)
+        return pan_deg, tilt_deg
 
     def to_degrees(self, pos):
         return pos * self.ARCSEC_PER_POS / 3600
