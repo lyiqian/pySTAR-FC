@@ -2,6 +2,7 @@ import abc
 import os
 import pickle
 import random
+import typing as T
 
 import cv2
 import fabric
@@ -31,7 +32,7 @@ class NextFixation:
 class IImageReader(abc.ABC):
     """An intermediate layer between eye and FC algorithm."""
     @abc.abstractmethod
-    def read(self, img_src):
+    def read(self, img_src) -> T.Any:
         pass
 
 class IFixationLoader(abc.ABC):
@@ -43,16 +44,16 @@ class IFixationLoader(abc.ABC):
 
 class IRetina(abc.ABC):
     @abc.abstractmethod
-    def capture(self):
+    def capture(self) -> T.Any:
         pass
 
 class ICalibration(abc.ABC):
     @abc.abstractmethod
-    def get_pan_deg(self):
+    def get_pan_deg(self, *args, **kwargs) -> float:
         pass
 
     @abc.abstractmethod
-    def get_tilt_deg(self):
+    def get_tilt_deg(self, *args, **kwargs) -> float:
         pass
 
 class IEyeMover(abc.ABC):
@@ -79,7 +80,7 @@ class AbstractEmbodiedSTFC(abc.ABC):
         self.eye = eye
 
     @abc.abstractmethod
-    def calc_fixation(self, image, fixation_history):
+    def calc_fixation(self, image, fixation_history) -> T.Any:
         pass
 
     def process_single(self):
@@ -97,7 +98,7 @@ class AbstractEmbodiedSTFC(abc.ABC):
 
 ## Concrete Classes #TODO move to sep file(s)
 GSV_CONN_STRING = "eason@gsv.eecs.yorku.ca"
-MYPASS = os.getenv("GSV_PW")
+MYPASS = os.getenv("GSV_PW", "")
 LOCAL_ROOT = '/home/yiqian/repos/pySTAR-FC'
 REMOTE_ROOT = '/home/eason/repos/pySTAR-FC'
 LOCAL_IMG_FILENAME = 'bridge-cards-s.jpg'
@@ -197,7 +198,7 @@ class SshFixationLoader(FileFixationLoader):
 class DummySTFC(AbstractEmbodiedSTFC):
     TEMP_FIXATION_PATH = '/tmp/next_fixation.mat'
 
-    def calc_fixation(self, image):
+    def calc_fixation(self, image, fixation_history):
         img_h, img_w = image.shape[0], image.shape[1]
 
         h_pixel = random.randint(0, img_w-1)
@@ -293,7 +294,7 @@ class PtuEyeMover(IEyeMover):
         self.motor_history.append((pan_deg_, tilt_deg_))
 
     def _send_cmd(self, cmd):
-        self.ser.write(cmd.encode('ascii'))
+        self.ptu_ctrl.ser.write(cmd.encode('ascii'))
 
 
 class LinearCalibration(ICalibration):
@@ -304,11 +305,11 @@ class LinearCalibration(ICalibration):
     PAN_SLOPE = -29.98246751
     PAN_INTERCEPT = 7.84100644  # should be 0 in theory
 
-    def get_pan_deg(self, del_x_px):
+    def get_pan_deg(self, del_x_px=0, *args, **kwargs):
         pan_deg = (del_x_px - self.PAN_INTERCEPT) / self.PAN_SLOPE
         return pan_deg
 
-    def get_tilt_deg(self, del_y_px):
+    def get_tilt_deg(self, del_y_px=0, *args, **kwargs):
         tilt_deg = (del_y_px - self.TILT_INTERCEPT) / self.TILT_SLOPE
         return tilt_deg
 
